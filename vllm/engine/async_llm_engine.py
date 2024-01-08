@@ -279,6 +279,7 @@ class AsyncLLMEngine:
         self._background_loop_unshielded = None
         self.start_engine_loop = start_engine_loop
         self._request_tracker = RequestTracker()
+        self.time_counter = {}
 
     @property
     def is_running(self) -> bool:
@@ -432,7 +433,7 @@ class AsyncLLMEngine:
         # Preprocess the request.
         # This should not be used for logging, as it is monotonic time.
         arrival_time = time.monotonic()
-
+        self.time_counter[request_id] = time.time_ns()
         try:
             stream = await self.add_request(request_id,
                                             prompt,
