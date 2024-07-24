@@ -863,7 +863,7 @@ class Scheduler:
         # If any requests are swapped, prioritized swapped requests.
         if not self.swapped:
             remaining_waiting, prefills = self._schedule_prefills(
-                self.waiting, budget, curr_loras, enable_chunking=False)
+                self.waiting, budget, curr_loras, policy, enable_chunking=False)
         
         force_preempted = 0
 
