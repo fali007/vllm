@@ -786,7 +786,8 @@ class SchedulerConfig:
                  delay_factor: float = 0.0,
                  enable_chunked_prefill: bool = False,
                  embedding_mode: Optional[bool] = False,
-                 preemption_mode: Optional[str] = None) -> None:
+                 preemption_mode: Optional[str] = None,
+                 policy: str = "edf") -> None:
         if max_num_batched_tokens is not None:
             self.max_num_batched_tokens = max_num_batched_tokens
         else:
@@ -815,6 +816,7 @@ class SchedulerConfig:
         self.chunked_prefill_enabled = enable_chunked_prefill
         self.embedding_mode = embedding_mode
         self.preemption_mode = preemption_mode
+        self.policy = policy
         self._verify_args()
 
     def _verify_args(self) -> None:
