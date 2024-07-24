@@ -120,7 +120,7 @@ class OpenAIServingCompletion(OpenAIServing):
                 ))
 
             sched_metadata = {}
-            sched_metadata['priority'] = self.priority_map[request.user]
+            sched_metadata['edf'] = self.priority_map[request.user]
 
             for i, prompt_inputs in enumerate(prompts):
                 request_id_item = f"{request_id}-{i}"
