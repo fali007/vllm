@@ -524,6 +524,7 @@ class LLMEngine:
         lora_request: Optional[LoRARequest],
         prompt_adapter_request: Optional[PromptAdapterRequest],
         trace_headers: Optional[Mapping[str, str]] = None,
+        sched_metadata: Optional[Dict[str, Optional[int]]] = None
     ) -> None:
         # Create the sequences.
         block_size = self.cache_config.block_size
@@ -542,7 +543,8 @@ class LLMEngine:
                 arrival_time=arrival_time,
                 lora_request=lora_request,
                 trace_headers=trace_headers,
-                prompt_adapter_request=prompt_adapter_request)
+                prompt_adapter_request=prompt_adapter_request,
+                sched_metadata=sched_metadata)
         elif isinstance(params, PoolingParams):
             seq_group = self._create_sequence_group_with_pooling(
                 request_id,
@@ -550,7 +552,8 @@ class LLMEngine:
                 params,
                 arrival_time=arrival_time,
                 lora_request=lora_request,
-                prompt_adapter_request=prompt_adapter_request)
+                prompt_adapter_request=prompt_adapter_request,
+                sched_metadata=sched_metadata)
         else:
             raise ValueError(
                 "Either SamplingParams or PoolingParams must be provided.")
@@ -606,6 +609,7 @@ class LLMEngine:
         lora_request: Optional[LoRARequest] = None,
         trace_headers: Optional[Mapping[str, str]] = None,
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
+        sched_metadata: Optional[Dict[str, Optional[int]]] = None
     ) -> None:
         """Add a request to the engine's request pool.
 
@@ -669,6 +673,7 @@ class LLMEngine:
             lora_request=lora_request,
             prompt_adapter_request=prompt_adapter_request,
             trace_headers=trace_headers,
+            sched_metadata=sched_metadata
         )
 
     def _create_sequence_group_with_sampling(
@@ -680,6 +685,7 @@ class LLMEngine:
         lora_request: Optional[LoRARequest],
         trace_headers: Optional[Mapping[str, str]] = None,
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
+        sched_metadata: Optional[Dict[str, Optional[int]]] = None,
     ) -> SequenceGroup:
         """Creates a SequenceGroup with SamplingParams."""
         max_logprobs = self.get_model_config().max_logprobs
@@ -705,7 +711,8 @@ class LLMEngine:
             sampling_params=sampling_params,
             lora_request=lora_request,
             trace_headers=trace_headers,
-            prompt_adapter_request=prompt_adapter_request)
+            prompt_adapter_request=prompt_adapter_request,
+            sched_metadata=sched_metadata)
 
         return seq_group
 
@@ -717,6 +724,7 @@ class LLMEngine:
         arrival_time: float,
         lora_request: Optional[LoRARequest],
         prompt_adapter_request: Optional[PromptAdapterRequest],
+        sched_metadata: Optional[Dict[str, Optional[int]]],
     ) -> SequenceGroup:
         """Creates a SequenceGroup with PoolingParams."""
         # Defensive copy of PoolingParams, which are used by the pooler
@@ -728,7 +736,8 @@ class LLMEngine:
             arrival_time=arrival_time,
             lora_request=lora_request,
             pooling_params=pooling_params,
-            prompt_adapter_request=prompt_adapter_request)
+            prompt_adapter_request=prompt_adapter_request,
+            sched_metadata=sched_metadata)
         return seq_group
 
     def abort_request(self, request_id: Union[str, Iterable[str]]) -> None:
@@ -1002,7 +1011,7 @@ class LLMEngine:
 
         # Request stats
         #   Latency
-        time_e2e_requests: List[float] = []
+        time_e2e_requests: Dict[int, List[float]] = {1:[], 2:[], 3:[]}
         #   Metadata
         num_prompt_tokens_requests: List[int] = []
         num_generation_tokens_requests: List[int] = []
@@ -1021,6 +1030,7 @@ class LLMEngine:
 
             for idx, scheduled_seq_group in enumerate(
                     scheduler_outputs.scheduled_seq_groups):
+                priority = scheduled_seq_group.seq_group.sched_metadata['priority']
                 group_was_prefill = idx < scheduler_outputs.num_prefill_groups
                 seq_group = scheduled_seq_group.seq_group
 
@@ -1053,8 +1063,7 @@ class LLMEngine:
                 # which can only happen once.
                 if seq_group.is_finished():
                     # Latency timings
-                    time_e2e_requests.append(now -
-                                             seq_group.metrics.arrival_time)
+                    time_e2e_requests[priority].append(now - seq_group.metrics.arrival_time)
 
                     # Metadata
                     num_prompt_tokens_requests.append(

@@ -58,6 +58,8 @@ class OpenAIServingCompletion(OpenAIServing):
                          lora_modules=lora_modules,
                          prompt_adapters=prompt_adapters,
                          request_logger=request_logger)
+    
+        self.priority_map = {"Alan":1, "Hari":2, "Noel":3}
 
     async def create_completion(self, request: CompletionRequest,
                                 raw_request: Request):
@@ -117,6 +119,9 @@ class OpenAIServingCompletion(OpenAIServing):
                     add_special_tokens=request.add_special_tokens,
                 ))
 
+            sched_metadata = {}
+            sched_metadata['priority'] = self.priority_map[request.user]
+
             for i, prompt_inputs in enumerate(prompts):
                 request_id_item = f"{request_id}-{i}"
 
@@ -141,6 +146,7 @@ class OpenAIServingCompletion(OpenAIServing):
                     lora_request=lora_request,
                     prompt_adapter_request=prompt_adapter_request,
                     trace_headers=trace_headers,
+                    sched_metadata=sched_metadata,
                 )
 
                 generators.append(generator)

@@ -99,7 +99,7 @@ class EngineArgs:
     preemption_mode: Optional[str] = None
 
     scheduler_delay_factor: float = 0.0
-    enable_chunked_prefill: Optional[bool] = None
+    enable_chunked_prefill: bool = False
 
     guided_decoding_backend: str = 'outlines'
     # Speculative decoding configuration.

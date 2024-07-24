@@ -100,7 +100,7 @@ class Metrics:
         self.histogram_e2e_time_request = self._histogram_cls(
             name="vllm:e2e_request_latency_seconds",
             documentation="Histogram of end to end request latency in seconds.",
-            labelnames=labelnames,
+            labelnames=labelnames + ["priority"],
             buckets=[1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0])
         #   Metadata
         self.histogram_num_prompt_tokens_request = self._histogram_cls(
@@ -318,7 +318,7 @@ class Stats:
 
     # Request stats (should have _requests suffix)
     #   Latency
-    time_e2e_requests: List[float]
+    time_e2e_requests: Dict[int, List[float]]
     #   Metadata
     num_prompt_tokens_requests: List[int]
     num_generation_tokens_requests: List[int]
@@ -465,6 +465,10 @@ class PrometheusStatLogger(StatLoggerBase):
         # Convenience function for logging list to histogram.
         for datum in data:
             histogram.labels(**self.labels).observe(datum)
+    
+    def _log_labeled_histogram(self, histogram, data: Union[List[int], List[float]], label_key:str, label_val) -> None:
+        for datum in data:
+            histogram.labels(**{**self.labels, label_key: label_val}).observe(datum)
 
     def _log_prometheus(self, stats: Stats) -> None:
         # System state data
@@ -493,8 +497,12 @@ class PrometheusStatLogger(StatLoggerBase):
 
         # Request level data
         # Latency
-        self._log_histogram(self.metrics.histogram_e2e_time_request,
-                            stats.time_e2e_requests)
+        self._log_labeled_histogram(self.metrics.histogram_e2e_time_request,
+                            stats.time_e2e_requests[1], "priority", 1)
+        self._log_labeled_histogram(self.metrics.histogram_e2e_time_request,
+                            stats.time_e2e_requests[2], "priority", 2)
+        self._log_labeled_histogram(self.metrics.histogram_e2e_time_request,
+                            stats.time_e2e_requests[3], "priority", 3)
         # Metadata
         finished_reason_counter = CollectionsCounter(
             stats.finished_reason_requests)
