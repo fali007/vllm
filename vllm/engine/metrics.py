@@ -102,6 +102,12 @@ class Metrics:
             documentation="Histogram of end to end request latency in seconds.",
             labelnames=labelnames + ["priority"],
             buckets=[1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0])
+        #   Latency
+        self.histogram_queue_time_request = self._histogram_cls(
+            name="vllm:queue_time_seconds",
+            documentation="Histogram of queue time for request in seconds.",
+            labelnames=labelnames + ["priority"],
+            buckets=[1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0])
         #   Metadata
         self.histogram_num_prompt_tokens_request = self._histogram_cls(
             name="vllm:request_prompt_tokens",
@@ -325,7 +331,7 @@ class Stats:
     best_of_requests: List[int]
     n_requests: List[int]
     finished_reason_requests: List[str]
-
+    queue_time: Dict[int, List[float]]
     spec_decode_metrics: Optional["SpecDecodeWorkerMetrics"] = None
 
 
@@ -503,6 +509,15 @@ class PrometheusStatLogger(StatLoggerBase):
                             stats.time_e2e_requests[2], "priority", 2)
         self._log_labeled_histogram(self.metrics.histogram_e2e_time_request,
                             stats.time_e2e_requests[3], "priority", 3)
+        
+        #Queue Time
+        self._log_labeled_histogram(self.metrics.histogram_queue_time_request,
+                            stats.queue_time[1], "priority", 1)
+        self._log_labeled_histogram(self.metrics.histogram_queue_time_request,
+                            stats.queue_time[2], "priority", 2)
+        self._log_labeled_histogram(self.metrics.histogram_queue_time_request,
+                            stats.queue_time[3], "priority", 3)
+        
         # Metadata
         finished_reason_counter = CollectionsCounter(
             stats.finished_reason_requests)

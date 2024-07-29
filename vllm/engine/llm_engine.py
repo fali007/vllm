@@ -1012,6 +1012,7 @@ class LLMEngine:
         # Request stats
         #   Latency
         time_e2e_requests: Dict[int, List[float]] = {1:[], 2:[], 3:[]}
+        queue_time: Dict[int, List[float]] = {1:[], 2:[], 3:[]}
         #   Metadata
         num_prompt_tokens_requests: List[int] = []
         num_generation_tokens_requests: List[int] = []
@@ -1047,7 +1048,7 @@ class LLMEngine:
                     if not seq_group.is_prefill():
                         latency = seq_group.get_last_latency(now)
                         time_to_first_tokens_iter.append(latency)
-                        print("Felix Log : Latency -",latency ,seq_group.metrics.arrival_time, now, seq_group.metrics.last_token_time, seq_group.metrics)
+                        queue_time[priority].append(seq_group.metrics.time_in_queue)
 
                         # One generation token per finished prefill.
                         num_generation_tokens_from_prefill_groups += (
@@ -1128,6 +1129,7 @@ class LLMEngine:
             best_of_requests=best_of_requests,
             n_requests=n_requests,
             finished_reason_requests=finished_reason_requests,
+            queue_time=queue_time,
         )
 
     def add_lora(self, lora_request: LoRARequest) -> bool:
