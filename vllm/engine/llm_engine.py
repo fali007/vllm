@@ -1031,7 +1031,7 @@ class LLMEngine:
 
             for idx, scheduled_seq_group in enumerate(
                     scheduler_outputs.scheduled_seq_groups):
-                priority = scheduled_seq_group.seq_group.sched_metadata['tbt']
+                priority = scheduled_seq_group.seq_group.sched_metadata['priority']
                 group_was_prefill = idx < scheduler_outputs.num_prefill_groups
                 seq_group = scheduled_seq_group.seq_group
 
