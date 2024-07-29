@@ -1047,7 +1047,7 @@ class LLMEngine:
                     if not seq_group.is_prefill():
                         latency = seq_group.get_last_latency(now)
                         time_to_first_tokens_iter.append(latency)
-                        print("Felix Log" ,seq_group.metrics.arrival_time, now, seq_group.metrics.last_token_time, seq_group.metrics)
+                        print("Felix Log : Latency -",latency ,seq_group.metrics.arrival_time, now, seq_group.metrics.last_token_time, seq_group.metrics)
 
                         # One generation token per finished prefill.
                         num_generation_tokens_from_prefill_groups += (
