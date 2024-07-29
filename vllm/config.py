@@ -787,7 +787,7 @@ class SchedulerConfig:
                  enable_chunked_prefill: bool = False,
                  embedding_mode: Optional[bool] = False,
                  preemption_mode: Optional[str] = None,
-                 policy: str = "edf") -> None:
+                 policy: str = "sp") -> None:
         if max_num_batched_tokens is not None:
             self.max_num_batched_tokens = max_num_batched_tokens
         else:

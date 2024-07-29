@@ -71,7 +71,7 @@ class SP(Policy):
                 now - seq_group.metrics.arrival_time)
 
     def forces_preemption(self) -> bool:
-        return False
+        return True
 
     def sort_waiting(self) -> bool:
         return True
