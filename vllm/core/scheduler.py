@@ -330,7 +330,7 @@ class Scheduler:
                                        if self.enable_artificial_preemption
                                        else 0)
         self.num_cumulative_preemption: int = 0
-        self.max_remaining_tokens = os.environ['MAX_REMAINING_TOKENS']
+        self.max_remaining_tokens = int(os.environ['MAX_REMAINING_TOKENS'])
 
     @property
     def lora_enabled(self) -> bool:
