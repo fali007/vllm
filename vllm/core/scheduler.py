@@ -330,6 +330,7 @@ class Scheduler:
                                        if self.enable_artificial_preemption
                                        else 0)
         self.num_cumulative_preemption: int = 0
+        self.max_remaining_tokens = os.environ['MAX_REMAINING_TOKENS']
 
     @property
     def lora_enabled(self) -> bool:
@@ -828,6 +829,12 @@ class Scheduler:
             waiting_queue.appendleft(seq_group)
 
         return (waiting_queue, running_queue, force_preemption_cnt)
+    
+    def _get_min_remaining_tokens(self, queue: deque) -> int:
+        min_reminaing_tokens = 5000
+        for seq_group in queue:
+            min_reminaing_tokens = min(seq_group.get_num_uncomputed_tokens(), min_reminaing_tokens)
+        return min_reminaing_tokens
 
     def _schedule_default(self) -> SchedulerOutputs:
         """Schedule queued requests.
@@ -859,9 +866,12 @@ class Scheduler:
             self.swapped, SchedulerSwappedInOutputs.create_empty())
         
         policy = PolicyFactory.get_policy(policy_name=self.scheduler_config.policy)
-
+        
+        min_remaining_tokens = self._get_min_remaining_tokens(self.running)
+        pritority = self.running[-1].sched_metadata['priority'] < self.waiting[0].sched_metadata['priority']
+        
         # If any requests are swapped, prioritized swapped requests.
-        if not self.swapped:
+        if not self.swapped and (min_remaining_tokens > self.max_remaining_tokens or pritority):
             remaining_waiting, prefills = self._schedule_prefills(
                 self.waiting, budget, curr_loras, policy, enable_chunking=False)
         
