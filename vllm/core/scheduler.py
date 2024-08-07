@@ -870,9 +870,9 @@ class Scheduler:
         min_remaining_tokens = self._get_min_remaining_tokens(self.running)
         priority = False
         if len(remaining_running) > 0:
-            priority = remaining_running[-1].sched_metadata['priority'] < self.waiting[0].sched_metadata['priority']
+            priority = remaining_running[-1].sched_metadata['priority'] <= self.waiting[0].sched_metadata['priority']
         else:
-            priority = True
+            priority = False
         
         # If any requests are swapped, prioritized swapped requests.
         if not self.swapped and (min_remaining_tokens > self.max_remaining_tokens or priority):
