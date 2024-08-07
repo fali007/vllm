@@ -868,10 +868,14 @@ class Scheduler:
         policy = PolicyFactory.get_policy(policy_name=self.scheduler_config.policy)
         
         min_remaining_tokens = self._get_min_remaining_tokens(self.running)
-        pritority = self.running[-1].sched_metadata['priority'] < self.waiting[0].sched_metadata['priority']
+        priority = False
+        if len(remaining_running) > 0:
+            priority = remaining_running[-1].sched_metadata['priority'] < self.waiting[0].sched_metadata['priority']
+        else:
+            priority = True
         
         # If any requests are swapped, prioritized swapped requests.
-        if not self.swapped and (min_remaining_tokens > self.max_remaining_tokens or pritority):
+        if not self.swapped and (min_remaining_tokens > self.max_remaining_tokens or priority):
             remaining_waiting, prefills = self._schedule_prefills(
                 self.waiting, budget, curr_loras, policy, enable_chunking=False)
         
