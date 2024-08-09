@@ -870,7 +870,7 @@ class Scheduler:
         min_remaining_tokens = self._get_min_remaining_tokens(self.running)
         priority = False
         if len(remaining_running) > 0 and len(self.waiting) > 0:
-            priority = self.waiting[0].sched_metadata['priority'] == 1
+            priority = remaining_running[-1].sched_metadata['priority'] >= self.waiting[0].sched_metadata['priority']
         else:
             priority = False
         
