@@ -330,7 +330,9 @@ class Scheduler:
                                        if self.enable_artificial_preemption
                                        else 0)
         self.num_cumulative_preemption: int = 0
-        self.max_remaining_tokens = int(os.environ['MAX_REMAINING_TOKENS'])
+        self.max_remaining_tokens_1 = int(os.environ['MAX_REMAINING_TOKENS_1'])
+        self.max_remaining_tokens_2 = int(os.environ['MAX_REMAINING_TOKENS_2'])
+        self.max_remaining_tokens_rest = int(os.environ['MAX_REMAINING_TOKENS_REST'])
 
     @property
     def lora_enabled(self) -> bool:
@@ -868,14 +870,10 @@ class Scheduler:
         policy = PolicyFactory.get_policy(policy_name=self.scheduler_config.policy)
         
         min_remaining_tokens = self._get_min_remaining_tokens(self.running)
-        priority = False
-        if len(remaining_running) > 0 and len(self.waiting) > 0:
-            priority = remaining_running[-1].sched_metadata['priority'] >= self.waiting[0].sched_metadata['priority']
-        else:
-            priority = False
+        priority = self.waiting[0].sched_metadata['priority']
         
         # If any requests are swapped, prioritized swapped requests.
-        if not self.swapped and (min_remaining_tokens > self.max_remaining_tokens or priority):
+        if (priority == 1 and min_remaining_tokens > self.max_remaining_tokens_1) or (priority == 2 and min_remaining_tokens > self.max_remaining_tokens_2) or (min_remaining_tokens > self.max_remaining_tokens_rest):
             remaining_waiting, prefills = self._schedule_prefills(
                 self.waiting, budget, curr_loras, policy, enable_chunking=False)
         

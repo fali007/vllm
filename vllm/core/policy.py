@@ -55,7 +55,7 @@ class EDF(Policy):
         return (seq_group.sched_metadata["tbt"] * seq_group.sampling_params.max_tokens + seq_group.metrics.arrival_time - now)
     
     def forces_preemption(self) -> bool:
-        return True
+        return False
 
     def sort_waiting(self) -> bool:
         return True
