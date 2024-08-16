@@ -1005,8 +1005,8 @@ class LLMEngine:
         # Iteration stats
         num_prompt_tokens_iter = 0
         num_generation_tokens_iter = 0
-        time_to_first_tokens_iter: List[float] = []
-        time_per_output_tokens_iter: List[float] = []
+        time_to_first_tokens_iter: Dict[int, List[float]] = {1:[], 2:[], 3:[]}
+        time_per_output_tokens_iter: Dict[int, List[float]] = {1:[], 2:[], 3:[]}
         num_preemption_iter = (0 if scheduler_outputs is None else
                                scheduler_outputs.preempted)
 
@@ -1048,7 +1048,7 @@ class LLMEngine:
                     # get TTFT.
                     if not seq_group.is_prefill():
                         latency = seq_group.get_last_latency(now)
-                        time_to_first_tokens_iter.append(latency)
+                        time_to_first_tokens_iter[priority].append(latency)
                         queue_time[priority].append(seq_group.metrics.time_in_queue)
 
                         # One generation token per finished prefill.
@@ -1057,7 +1057,7 @@ class LLMEngine:
                 else:
                     # TPOTs.
                     latency = seq_group.get_last_latency(now)
-                    time_per_output_tokens_iter.append(latency)
+                    time_per_output_tokens_iter[priority].append(latency)
 
                 # Because of chunked prefill, we can have a single sequence
                 # group that does multiple prompt_runs. To prevent logging

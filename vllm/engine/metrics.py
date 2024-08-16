@@ -81,7 +81,7 @@ class Metrics:
         self.histogram_time_to_first_token = self._histogram_cls(
             name="vllm:time_to_first_token_seconds",
             documentation="Histogram of time to first token in seconds.",
-            labelnames=labelnames,
+            labelnames=labelnames + ["priority"],
             buckets=[
                 0.001, 0.005, 0.01, 0.02, 0.04, 0.06, 0.08, 0.1, 0.25, 0.5,
                 0.75, 1.0, 2.5, 5.0, 7.5, 10.0
@@ -89,7 +89,7 @@ class Metrics:
         self.histogram_time_per_output_token = self._histogram_cls(
             name="vllm:time_per_output_token_seconds",
             documentation="Histogram of time per output token in seconds.",
-            labelnames=labelnames,
+            labelnames=labelnames + ["priority"],
             buckets=[
                 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75,
                 1.0, 2.5
@@ -318,8 +318,8 @@ class Stats:
     # Iteration stats (should have _iter suffix)
     num_prompt_tokens_iter: int
     num_generation_tokens_iter: int
-    time_to_first_tokens_iter: List[float]
-    time_per_output_tokens_iter: List[float]
+    time_to_first_tokens_iter: Dict[int, List[float]]
+    time_per_output_tokens_iter: Dict[int, List[float]]
     num_preemption_iter: int
 
     # Request stats (should have _requests suffix)
@@ -496,10 +496,20 @@ class PrometheusStatLogger(StatLoggerBase):
                           stats.num_prompt_tokens_iter)
         self._log_counter(self.metrics.counter_generation_tokens,
                           stats.num_generation_tokens_iter)
-        self._log_histogram(self.metrics.histogram_time_to_first_token,
-                            stats.time_to_first_tokens_iter)
-        self._log_histogram(self.metrics.histogram_time_per_output_token,
-                            stats.time_per_output_tokens_iter)
+        
+        self._log_labeled_histogram(self.metrics.histogram_time_to_first_token,
+                            stats.time_to_first_tokens_iter[1], "priority", 1)
+        self._log_labeled_histogram(self.metrics.histogram_time_to_first_token,
+                            stats.time_to_first_tokens_iter[2], "priority", 2)
+        self._log_labeled_histogram(self.metrics.histogram_time_to_first_token,
+                            stats.time_to_first_tokens_iter[3], "priority", 3)
+        
+        self._log_labeled_histogram(self.metrics.histogram_time_per_output_token,
+                            stats.time_per_output_tokens_iter[1], "priority", 1)
+        self._log_labeled_histogram(self.metrics.histogram_time_per_output_token,
+                            stats.time_per_output_tokens_iter[2], "priority", 2)
+        self._log_labeled_histogram(self.metrics.histogram_time_per_output_token,
+                            stats.time_per_output_tokens_iter[3], "priority", 3)
 
         # Request level data
         # Latency
